@@ -1205,7 +1205,7 @@ contract ZooToken is BEP20 {
     /**
      * @notice Constructs the ZooToken contract.
      */
-    constructor() public BEP20("PolyZoo Token", "ZOO") {
+    constructor() public BEP20("ZooToken", "ZOO") {
         _operator = _msgSender();
         emit OperatorTransferred(address(0), _operator);
 
