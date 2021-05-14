@@ -1,10 +1,59 @@
-pragma solidity ^0.8.0;
+/**
+   $ZOO
+   
+   #LIQ+#RFI+#SHIB+#DOGE => #PIG 
+   #PIG =solidity:= 0.8; Liquidity:=10; tax:=20=> #ZOO
+   Make $ZOO a Welfare Society!
+
+   Great features:
+   10% fee auto add to the liquidity pool to locked forever when selling
+   20% fee auto distribute to all holders
+   50% burn to the black hole, with such big black hole and 10% fee, the strong holder will get a valuable reward
+
+   I will burn liquidity LPs to burn addresses to lock the pool forever.
+   I will renounce the ownership to burn addresses to transfer #ZOO to the community, make sure it's 100% safe.
+
+   I will add 0.999 BNB and all the left 49.5% total supply to the pool
+   Can you make #ZOO 10000000X? 
+
+   1,000,000,000,000,000 total supply
+   5,000,000,000,000 tokens limitation for trade
+   0% tokens for dev
+
+   10% fee for liquidity will go to an address that the contract creates, 
+   and the contract will sell it and add to liquidity automatically, 
+   it's the best part of the #ZOO idea, increasing the liquidity pool automatically, 
+   help the pool grow from the small init pool.
+
+ */
+
+pragma solidity ^0.8.3;
 // SPDX-License-Identifier: Unlicensed
 interface IERC20 {
 
     function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns the amount of tokens owned by `account`.
+     */
     function balanceOf(address account) external view returns (uint256);
+
+    /**
+     * @dev Moves `amount` tokens from the caller's account to `recipient`.
+     *
+     * Returns a boolean value indicating whether the operation succeeded.
+     *
+     * Emits a {Transfer} event.
+     */
     function transfer(address recipient, uint256 amount) external returns (bool);
+
+    /**
+     * @dev Returns the remaining number of tokens that `spender` will be
+     * allowed to spend on behalf of `owner` through {transferFrom}. This is
+     * zero by default.
+     *
+     * This value changes when {approve} or {transferFrom} are called.
+     */
     function allowance(address owner, address spender) external view returns (uint256);
 
     /**
@@ -671,12 +720,6 @@ contract ZooToken is Context, IERC20, Ownable {
     mapping (address => bool) private _isExcluded;
     address[] private _excluded;
    
-    address _lq1 = 0x8076C74C5e3F5852037F31Ff0093Eeb8c8ADd8D3;//safemoon
-    address _lq2 = 0x3aD9594151886Ce8538C1ff615EFa2385a8C3A88;//safemars
-    address _lq3 = 0xacFC95585D80Ab62f67A14C566C1b7a49Fe91167;//FEG
-    address _lq4 = 0x380624A4a7e69dB1cA07deEcF764025FC224D056;//SafeBTC (SAFEBTC)
-    address _lq5 = 0x8850D2c68c632E3B258e612abAA8FadA7E6958E5;//PIG
-
     uint256 private constant MAX = ~uint256(0);
     uint256 private _tTotal = 1000000000 * 10**6 * 10**9;
     uint256 private _rTotal = (MAX - (MAX % _tTotal));
@@ -686,10 +729,10 @@ contract ZooToken is Context, IERC20, Ownable {
     string private _symbol = "ZOO";
     uint8 private _decimals = 9;
     
-    uint256 public _taxFee = 2;
+    uint256 public _taxFee = 20;
     uint256 private _previousTaxFee = _taxFee;
     
-    uint256 public _liquidityFee = 3;
+    uint256 public _liquidityFee = 10;
     uint256 private _previousLiquidityFee = _liquidityFee;
 
     IUniswapV2Router02 public immutable uniswapV2Router;
@@ -700,8 +743,6 @@ contract ZooToken is Context, IERC20, Ownable {
     
     uint256 public _maxTxAmount = 5000000 * 10**6 * 10**9;
     uint256 private numTokensSellToAddToLiquidity = 500000 * 10**6 * 10**9;
-    
-
     
     event MinTokensBeforeSwapUpdated(uint256 minTokensBeforeSwap);
     event SwapAndLiquifyEnabledUpdated(bool enabled);
@@ -720,7 +761,7 @@ contract ZooToken is Context, IERC20, Ownable {
     constructor () {
         _rOwned[_msgSender()] = _rTotal;
         
-        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F); //BSC contract address
+        IUniswapV2Router02 _uniswapV2Router = IUniswapV2Router02(0x05fF2B0DB69458A0750badebc4f9e13aDd608C7F);
          // Create a uniswap pair for this new token
         uniswapV2Pair = IUniswapV2Factory(_uniswapV2Router.factory())
             .createPair(address(this), _uniswapV2Router.WETH());
@@ -1021,7 +1062,7 @@ contract ZooToken is Context, IERC20, Ownable {
 
     function swapAndLiquify(uint256 contractTokenBalance) private lockTheSwap {
         // split the contract balance into halves
-        uint256 half = contractTokenBalance.div(6);
+        uint256 half = contractTokenBalance.div(2);
         uint256 otherHalf = contractTokenBalance.sub(half);
 
         // capture the contract's current ETH balance.
@@ -1060,12 +1101,12 @@ contract ZooToken is Context, IERC20, Ownable {
         );
     }
 
-    function addLiquidity(uint256 tokenAmount, uint256 amount) private {
+    function addLiquidity(uint256 tokenAmount, uint256 ethAmount) private {
         // approve token transfer to cover all possible scenarios
         _approve(address(this), address(uniswapV2Router), tokenAmount);
 
         // add the liquidity
-        uniswapV2Router.addLiquidityETH{value: amount}(
+        uniswapV2Router.addLiquidityETH{value: ethAmount}(
             address(this),
             tokenAmount,
             0, // slippage is unavoidable
